@@ -15,6 +15,7 @@ const (
 
 type Git struct {
 	Id          int64  `json:"id"`
+	Owner       Owner  `json:"owner"`
 	Name        string `json:"name"`
 	FullName    string `json:"full_name"`
 	Private     bool   `json:"private"`
@@ -22,6 +23,11 @@ type Git struct {
 	Description string `json:"description"`
 	GitUrl      string `json:"git_url"`
 	CloneUrl    string `json:"clone_url"`
+}
+
+type Owner struct {
+	Login string
+	id    int64
 }
 
 func (this *Git) Clone() error {
@@ -33,7 +39,7 @@ func (this *Git) Clone() error {
 	err := cmd.Run()
 	if err != nil {
 		log.Println("Error:", err)
-		log.Printf("rm -rf %s \n", path)
+		log.Printf("rm -rf %s \n", CLONE_PATH+"/"+this.Owner.Login)
 		Execute("rm", "-rf", path)
 		return err
 	}
@@ -67,6 +73,7 @@ func Start(size int, done chan<- bool) {
 					//After finished, re-push to ThreadPool
 					ThreadPool.Push(1)
 					if err == nil {
+						log.Printf("Add path to repo queue: %s \n", git.FullName)
 						RepoQueue.Push(git.FullName)
 					}
 
@@ -76,8 +83,8 @@ func Start(size int, done chan<- bool) {
 				}
 			}(&capaticy, lock)
 		}
-		//sleep 2 seconds
-		time.Sleep(time.Second * 2)
+		//sleep 1 seconds
+		time.Sleep(time.Second * 1)
 	}
 	done <- true
 }

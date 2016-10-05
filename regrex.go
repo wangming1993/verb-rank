@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/garyburd/redigo/redis"
 	"regexp"
 	"time"
 )
@@ -12,8 +13,17 @@ func main() {
 	fmt.Println(re.ReplaceAllString("-ab-axxb-", "$1"))
 	fmt.Println(re.ReplaceAllString("-ab-axxb-", "$1W"))
 	fmt.Println(re.ReplaceAllString("-ab-axxb-", "${1}W"))
+	length := len("a")
+	fmt.Println(length)
 
-	channel()
+	c, err := redis.Dial("tcp", ":6379")
+	if err != nil {
+		// handle error
+	}
+	defer c.Close()
+	reply, err := c.Do("get", "mike")
+	fmt.Println(reply, err)
+	//channel()
 }
 
 func channel() {

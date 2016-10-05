@@ -4,6 +4,14 @@
 	"GodepVersion": "v74",
 	"Deps": [
 		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
+		},
+		{
 			"ImportPath": "github.com/hishboy/gocommons/lang",
 			"Rev": "89887b2ade6d89e3b322e2e3c8e337ad5c6a447b"
 		},

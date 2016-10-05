@@ -2,6 +2,7 @@ package lib
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -15,6 +16,7 @@ var keywords = map[string]int8{
 	"chan": 1, "else": 1, "goto": 1, "package": 1, "switch": 1,
 	"const": 1, "fallthrough": 1, "if": 1, "range": 1, "type": 1,
 	"continue": 1, "for": 1, "import": 1, "return": 1, "var": 1,
+	"nil": 1,
 }
 
 var bucket map[string]int
@@ -39,14 +41,18 @@ func WC(file string) {
 	content := ReadFile(file)
 	//log.Println(content)
 	words := strings.FieldsFunc(content, filter)
-	log.Println(words)
+	//log.Println(words)
 
 	for _, word := range words {
-		if !isKeyword(word) {
+		if !isKeyword(word) && !isChar(word) {
 			AddToBucket(word)
 		}
 	}
-	log.Println(bucket)
+	//log.Println(bucket)
+}
+
+func isChar(word string) bool {
+	return (len(word) <= 1)
 }
 
 func isKeyword(word string) bool {
@@ -85,7 +91,8 @@ func ReadDir(name string) {
 	}
 }
 
-func WordCount(done <-chan bool) {
+func WordCount(done <-chan bool, wait *sync.WaitGroup) {
+	defer wait.Done()
 	var finished bool
 	log.Println("Start to count words...")
 	for {
@@ -97,16 +104,52 @@ func WordCount(done <-chan bool) {
 			}
 		}
 
-		select {
-		case <-done:
-			finished = true
+		// Only need receive one time
+		if !finished {
+			select {
+			case <-done:
+				log.Println("Receive done channel message...")
+				finished = true
+			}
 		}
+
 		repo = RepoQueue.Poll()
+		log.Println(repo)
 		if repo != nil {
 			path := CLONE_PATH + "/" + repo.(string)
 			log.Println("Start count " + path)
-			go ReadDir(path)
+			ReadDir(path)
+			log.Println("End count " + path)
 		}
 	}
 	log.Println("Finished all word count task....")
+	bucket := GetBucket()
+	for word, count := range bucket {
+		NewStatistic(word, count).Zadd()
+	}
+	buf, err := json.Marshal(bucket)
+	if err != nil {
+		log.Println("Marshal bucket failed", err)
+		return
+	}
+	ioutil.WriteFile("statistic.log", buf, 0755)
+}
+
+type Statistic struct {
+	Word  string
+	Count int
+}
+
+func NewStatistic(word string, count int) *Statistic {
+	return &Statistic{
+		Word:  word,
+		Count: count,
+	}
+}
+
+func (this *Statistic) Zadd() {
+	_, err := ZADD("statistics", this.Count, this.Word)
+	if err != nil {
+		log.Println("Zadd failed", err)
+	}
 }

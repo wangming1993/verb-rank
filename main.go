@@ -13,12 +13,14 @@ func main() {
 	golang()
 
 	//wc()
+
+	//redis()
 }
 
 func golang() {
 	repo := &lib.Repo{
 		Language: "go",
-		Limit:    10,
+		Limit:    3,
 	}
 	repo.Search()
 }
@@ -26,4 +28,10 @@ func golang() {
 func wc() {
 	dir := lib.CLONE_PATH
 	lib.ReadDir(dir)
+}
+
+func redis() {
+	reply, err := lib.Get("redis")
+
+	fmt.Println(reply, err)
 }

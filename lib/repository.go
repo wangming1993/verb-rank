@@ -3,6 +3,7 @@ package lib
 import (
 	//"fmt"
 	"strconv"
+	"sync"
 )
 
 const (
@@ -26,7 +27,7 @@ func (this *Repo) Search() {
 	params := make(map[string]string)
 	params["sort"] = "stars"
 	params["order"] = "desc"
-	params["q"] = "language:go stars:100..2000"
+	params["q"] = "language:go stars:5..20"
 	params["per_page"] = strconv.Itoa(this.Limit)
 	//fmt.Println(params)
 
@@ -45,6 +46,9 @@ func (this *Repo) Search() {
 		}
 	}
 	done := make(chan bool, 1)
-	go WordCount(done)
+	var wait sync.WaitGroup
+	wait.Add(1)
+	go WordCount(done, &wait)
 	Start(size, done)
+	wait.Wait()
 }
